@@ -49,9 +49,125 @@ class my_LinearRegression(BaseEstimator, ClassifierMixin):
         y_pred = np.where(pred <=  1.5, 1, 2)
             
         return y_pred
- ```       
-  
-- Приведения типов к одному типу и работа с ошибочными типами
+ ```
+ 
+ KNN
+ ```
+ class KNN(BaseEstimator, ClassifierMixin):
+    def __init__(self, n_val=5):
+        self.n_val = n_val
+        self.train = None
+        self.validation = None
+
+    def fit(self, X, y):
+        self.train = X
+        self.validation = y
+        
+    def predict(self, X):
+        prediction = []
+        j = 1
+        n = len(X)
+        for y_test in X.to_numpy():
+            distance = []
+            for i in range(len(self.train)):
+                distance.append(np.linalg.norm(np.array(self.train.iloc[i]) - y_test))
+                
+            distance_data = pd.DataFrame(data = distance, columns = ['dist'], index = self.validation.index)
+            neighbours = distance_data.sort_values(by='dist', axis=0)[:self.n_val]
+            
+            labels = self.validation.loc[neighbours.index]
+            vote = mode(labels).mode[0]
+            
+            prediction.append(vote)
+            j+=1
+            
+        return prediction
+ ```
+ 
+ SVM
+ ```
+ class SVM(BaseEstimator, ClassifierMixin):
+    def __init__(self, lr=0.01, lamb=0.01, iters=1000):
+        self.lr = lr
+        self.lamb = lamb
+        self.iters = iters
+        self.w = None
+        self.b = None
+        self.n = 0
+        self.m = 0
+        
+    def fit(self, X, y):
+        self.n = y.max()
+        self.m = y.min()
+        y_ = np.where(y <= (self.n+self.m)/2, -1, 1)
+        samples, features = X.shape
+        self.w = np.zeros(features)
+        self.b = 0
+        
+        for i in range(self.iters):
+            for j, x_j in enumerate(X.to_numpy()):
+                cond = y_[j] * (np.dot(x_j, self.w) - self.b) >= 1
+                if cond:
+                    self.w -= self.lr * (2 * self.lamb * self.w)
+                else:
+                    self.w -= self.lr * (2 * self.lamb * self.w - np.dot(x_j, y_[j]))
+                    self.b -= self.lr * y_[j]
+                    
+    def predict(self, X):
+        linear = np.sign(np.dot(X, self.w) - self.b)
+        pred = np.where(linear <= 0, self.m, self.n)
+        return pred
+ ``` 
+ 
+ Naive Bayes
+ ```
+ class NaiveBayes(BaseEstimator, ClassifierMixin):
+    def __init__(self):
+        self.classes = None 
+        self.n = 0
+        self.mean = None
+        self.var = None
+        self.pri = None
+        
+    def fit(self, X, y):
+        samples, features = X.shape
+        self.classes = np.unique(y)
+        self.n = len(self.classes)
+        self.mean = np.zeros((self.n, features), dtype=np.float64)
+        self.var = np.zeros((self.n, features), dtype=np.float64)
+        self.pri = np.zeros(self.n, dtype=np.float64)
+        
+        for j in self.classes:
+            X_ = X[j==y]
+            self.mean[j-1] = X_.mean(axis=0)
+            self.var[j-1] = X_.var(axis=0)
+            self.pri[j-1] = X_.shape[0]/float(self.n)
+            
+    def func(self, idx, x):
+        mean = self.mean[idx]
+        var = self.var[idx]
+        num = np.exp(- (x-mean)**2 / (2*var))
+        denum = np.sqrt(2 * np.pi * var)
+        k = num / denum
+                
+        return k
+            
+    def _predict(self, x):
+        post = []
+    
+        for k in range(len(self.classes)):
+            pri = np.log(self.pri[k])
+            class_cond = np.sum(np.log(self.func(k, x)))
+            poster = pri + class_cond
+            post.append(poster)
+            
+        return self.classes[np.argmax(post)]
+    
+    def predict(self, X):
+        pred = [self._predict(x) for x in X.to_numpy()]
+        return pred
+ ``` 
+- Составление Pipline'ов
 
 На данном этапе встретил проблему, что некоторые параметры для некоторых звезд были пропущены. На этапе pre-processing'а я решил избавится от этих звезд, так как данные позволяют это сделать
 
