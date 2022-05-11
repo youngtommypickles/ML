@@ -24,7 +24,7 @@ df=(df-df.mean())/df.std()
 - Проектировка классификаторов
 
 Линейная регрессия 
-
+```
 class my_LinearRegression(BaseEstimator, ClassifierMixin):
     def __init__(self, lr=0.01):
         self.lr = lr
@@ -49,7 +49,7 @@ class my_LinearRegression(BaseEstimator, ClassifierMixin):
         y_pred = np.where(pred <=  1.5, 1, 2)
             
         return y_pred
-        
+ ```       
   
 - Приведения типов к одному типу и работа с ошибочными типами
 
