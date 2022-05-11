@@ -8,18 +8,49 @@
 
 В прошлой работе 0 были допущены некоторые ошибки. В разделе Pre-processing'а мной были исправлены недочеты. Первый из них - удаление значений звезд, у которых были пропущены значения параметров - 'A', 'e_A', 'Width', 'e_Width'. В этой же работе я заменял значения пустых параметров на среднее значения звезд 1 фазы, так как в 0 лабораторной были выделено, что звезды с пропущенными значенями были 1 фазы.
 
+```
 arr = ['A', 'e_A', 'Width', 'e_Width']
 df_1 = df[df['Phase'] == 1]
     for i in arr:    
         df[i] = df[i].fillna(df[i].mean())
+```
         
 Второй недочет - нормализация значений, это было сделано для наилучшей работы классификаторов.
-
+```
 df=(df-df.mean())/df.std()
-
+```
 ### Работа состоит: 
 
-- Загрузка данных
+- Проектировка классификаторов
+
+Линейная регрессия 
+
+class my_LinearRegression(BaseEstimator, ClassifierMixin):
+    def __init__(self, lr=0.01):
+        self.lr = lr
+        self.iters = 1500
+        self.w = None
+        self.b = None
+    
+    def fit(self, X, y):
+        samples, features = X.shape
+        self.w = np.zeros(features)
+        self.b = 0
+        
+        for i in range(self.iters):
+            pred = np.dot(X, self.w) + self.b
+            dw = 1/samples * np.dot(X.T, (pred - y))
+            db = 1/samples * np.sum(pred - y)
+            self.w -= self.lr * dw
+            self.b -= self.lr * db
+    
+    def predict(self, X):
+        pred = np.dot(X, self.w) + self.b
+        y_pred = np.where(pred <=  1.5, 1, 2)
+            
+        return y_pred
+        
+  
 - Приведения типов к одному типу и работа с ошибочными типами
 
 На данном этапе встретил проблему, что некоторые параметры для некоторых звезд были пропущены. На этапе pre-processing'а я решил избавится от этих звезд, так как данные позволяют это сделать
